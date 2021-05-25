@@ -56,6 +56,7 @@ The median of the total number of steps is `r stepMedian`.
 
 ```{r daily1, echo = TRUE}
 dailySteps <- summarize(group_by(ActData, interval), avgSteps=mean(steps, na.rm=TRUE))
+
 with(dailySteps, plot(interval, avgSteps, type = "l", ylab = "Average steps", xlab = "Five-minute interval"))
 ```
 
@@ -96,8 +97,14 @@ ImpData <- NAData %>%
 
 4a. Make a histogram of the total number of steps taken each day.
 ```{ r NAs3, echo = TRUE}
-ImpSum <- summarize(group_by(ImpData, date), stepTotal=sum(steps))
+ImpData <- data.frame(ImpData)
 
+ImpSum  <- ImpData %>%
+  group_by(date) %>%
+  mutate(
+    steps = sum(steps)
+    )
+    
 qplot(ImpSum$steps, geom = "histogram", main = "Histogram of Daily Steps, Imputed", xlab = "Total steps per day")
 
 ```
@@ -105,17 +112,61 @@ qplot(ImpSum$steps, geom = "histogram", main = "Histogram of Daily Steps, Impute
 
 4b. Calculate and report the mean and median total number of steps taken per day. 
 ```{r NAs4, echo = TRUE}
-impMean <- with(ImpData, mean(steps))
-impMedian <- with(ImpData, median(stepTotal))
+impMean <- with(ImpSum, mean(steps))
+impMedian <- with(ImpSum, median(steps))
 ```
 
 The mean of the total number of imputed steps is `r impMean`.
 The median of the total number of imputed steps is `r impMedian`.
 
 
-4b. Do these values differ from the estimates from the first part of the assignment? 
-4c. What is the impact of imputing missing data on the estimates of the total daily number of steps?
+4c. Do these values differ from the estimates from the first part of the assignment? What is the impact of imputing missing data on the estimates of the total daily number of steps?
 
+```{r NAs5, echo = TRUE}
+if (impMean == stepMean) {
+  print("The mean number of steps from the imputed and not-imputed datasets is the same.")
+} else if (impMean < stepMean) {
+  print("The imputed mean is less than the not-imputed mean.")
+} else if (impMean > stepMean) {
+  print("The imputed mean is greater than the not-imputed mean.")
+}
 
+if (impMedian == stepMedian) {
+  print("The median number of steps from the imputed and not-imputed datasets is the same.")
+} else if (impMedian < stepMedian) {
+  print("The imputed median is less than the not-imputed median.")
+} else if (impMedian > stepMedian) {
+  print("The imputed median is greater than the not-imputed median.")
+}
+
+```
 
 ## Are there differences in activity patterns between weekdays and weekends?
+1. Create a new factor variable in the dataset with two levels – “weekday” and “weekend” indicating whether a given date is a weekday or weekend day.
+
+```{r days1, echo=TRUE}
+ImpData$dayName <- weekdays(ImpData$date)
+
+ImpData$week.end  <- ImpData$dayName %>%
+  if (ImpData$dayName = "Saturday" | ImpData$dayName = "Sunday") {
+    ImpData$week.end = "weekend"
+    } else {
+      ImpData$week.end = "weekday"
+      }
+
+ImpData$week.end <- as.factor(ImpData$week.end)
+```
+
+
+2. Make a panel plot containing a time series plot of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all weekday days or weekend days (y-axis). 
+
+```{r days2, echo=TRUE}
+weekSteps <- ImpData %>%
+  group_by(interval) %>%
+  mutate(
+    steps = mean(steps)
+    )
+
+
+
+```
