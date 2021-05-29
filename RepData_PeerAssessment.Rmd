@@ -8,7 +8,7 @@ output: html_document
 ## Loading and preprocessing the data
 Show any code that is needed to:  
 - Load the data 
-- Process/transform the data (if necessary) into a format suitable
+- Process/transform the data (if necessary)
 
 ```{r loading, echo = TRUE}
 if (!file.exists("data")) {dir.create("data")}
@@ -20,13 +20,13 @@ list.files("./data")
 
 ActData <- read.csv("./data/activity.csv", sep = ",", header=TRUE)
 
-str(ActData)
-
 ##Change the date column to date class
 ActData$date <- as.Date(ActData$date)
+str(ActData)
+
 ```
 
-## What is mean total number of steps taken per day?
+## What is total number of steps taken per day?
 1. Calculate the total number of steps per day
 
 ```{r steps1, echo = TRUE}
@@ -37,18 +37,17 @@ stepSum <- summarize(group_by(ActData, date), stepTotal=sum(steps))
 2. Make a histogram of the total number of steps per day
 
 ```{r steps2, echo = TRUE}
-library(ggplot2)
-qplot(stepSum$stepTotal, geom = "histogram", main = "Histogram of Daily Steps", xlab = "Total steps per day")
+hist(stepSum$stepTotal, breaks = 60, main = "Histogram of Daily Steps", xlab = "Total steps per day")
 ```
 
 3. Calculate and report the mean/median of the total number of steps per day
 
 ```{r steps3, echo = TRUE}
-stepMean <- with(stepSum, mean(stepTotal, na.rm = TRUE))
-stepMedian <- with(stepSum, median(stepTotal, na.rm = TRUE))
+stepMean <- mean(stepSum$stepTotal, na.rm = TRUE)
+stepMedian <- median(stepSum$stepTotal, na.rm = TRUE)
 ```
 
-The mean of the total number of steps is `r stepMean`.
+The mean of the total number of steps is `r stepMean`.  
 The median of the total number of steps is `r stepMedian`.
 
 ## What is the average daily activity pattern?
@@ -62,14 +61,14 @@ with(dailySteps, plot(interval, avgSteps, type = "l", ylab = "Average steps", xl
 
 2. Which 5-minute interval, on average across all the days in the dataset, contains the maximum number of steps?
 
-```{r steps2, echo = TRUE}
+```{r daily2, echo = TRUE}
 which.max(dailySteps$avgSteps)
 busiest <- dailySteps[104,]
 intName <- busiest$interval
 intAvg <- busiest$avgSteps
 ```
 
-The interval with the highest average number of steps is `r intName`, with `r intAvg` number of steps.
+The interval with the highest average number of steps is `r intName`, with `r intAvg` steps.
 
 ## Imputing missing values
 1. Calculate and report the total number of missing values in the dataset.
@@ -89,38 +88,32 @@ NAData <- ActData
 
 #Create function to calculate the mode
 mode <- function(x) {
-  uniqx <- unique(x)
-  uniqx[which.max(tabulate(match(x, uniqx)))]
+  uniquex <- unique(x)
+  uniquex[which.max(tabulate(match(x, uniquex)))]
 }
 
 #Impute using mode function
 ImpData <- NAData %>%
   group_by(interval) %>%
-  mutate(
-    steps = impute(steps, mode)
-    )
+  mutate(steps = impute(steps, mode))
+
+#Detach Hmisc so it doesn't interfere with dplyr
+detach("package:Hmisc", unload = TRUE)
 ```
 
 
 4a. Make a histogram of the total number of steps taken each day.
-```{ r NAs3, echo = TRUE}
-ImpData <- data.frame(ImpData)
+```{r NAs3, echo = TRUE}
+ImpSum <- summarize(group_by(ImpData, date), stepTotal=sum(steps))
 
-ImpSum  <- ImpData %>%
-  group_by(date) %>%
-  mutate(
-    steps = sum(steps)
-    )
-    
-hist(ImpSum$steps, main = "Histogram of Daily Steps, Imputed", xlab = "Total steps per day")
-
+hist(ImpSum$stepTotal, breaks = 60, main = "Histogram of Daily Steps, Imputed", xlab = "Total steps per day")
 ```
 
 
 4b. Calculate and report the mean and median total number of steps taken per day. 
 ```{r NAs4, echo = TRUE}
-impMean <- with(ImpSum, mean(steps))
-impMedian <- with(ImpSum, median(steps))
+impMean <- mean(ImpSum$stepTotal)
+impMedian <- median(ImpSum$stepTotal)
 ```
 
 The mean of the total number of imputed steps is `r impMean`.
@@ -149,7 +142,7 @@ if (impMedian == stepMedian) {
 ```
 
 ## Are there differences in activity patterns between weekdays and weekends?
-1. Create a new factor variable in the dataset with two levels – “weekday” and “weekend” indicating whether a given date is a weekday or weekend day.
+1. Create a new factor variable in the dataset with two levels – “weekday” and “weekend” – indicating whether a given date is a weekday or weekend day.
 
 ```{r days1, echo=TRUE}
 ImpData$dayName <- weekdays(ImpData$date)
@@ -169,12 +162,10 @@ ImpData2$dayType <- as.factor(ImpData2$dayType)
 2. Make a panel plot containing a time series plot of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all weekday days or weekend days (y-axis). 
 
 ```{r days2, echo=TRUE}
-weekSteps <- ImpData2 %>%
-  group_by(interval, dayType) %>%
-  mutate(
-    steps = mean(steps)
-    )
+library(ggplot2)
 
-ggplot(data=weekSteps, aes(x=interval, y=steps)) + facet_grid(.~dayType) + geom_line() + labs(title = "Average Steps, Weekday vs Weekend") + labs(x = "Time of Day") + labs(y = "Total Steps") + guides(fill=FALSE)
+weekSteps <- summarize(group_by(ImpData2, interval, dayType), steps=mean(steps))
+
+ggplot(data=weekSteps, aes(x=interval, y=steps)) + facet_grid(.~dayType) + geom_line() + labs(title = "Average Steps, Weekday vs Weekend") + labs(x = "Time of Day") + labs(y = "Average Steps")
 
 ```
