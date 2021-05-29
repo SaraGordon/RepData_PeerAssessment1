@@ -87,10 +87,17 @@ naSum
 library(Hmisc)
 NAData <- ActData
 
+#Create function to calculate the mode
+mode <- function(x) {
+  uniqx <- unique(x)
+  uniqx[which.max(tabulate(match(x, uniqx)))]
+}
+
+#Impute using mode function
 ImpData <- NAData %>%
   group_by(interval) %>%
   mutate(
-    steps = impute(steps, mean)
+    steps = impute(steps, mode)
     )
 ```
 
@@ -105,7 +112,7 @@ ImpSum  <- ImpData %>%
     steps = sum(steps)
     )
     
-qplot(ImpSum$steps, geom = "histogram", main = "Histogram of Daily Steps, Imputed", xlab = "Total steps per day")
+hist(ImpSum$steps, main = "Histogram of Daily Steps, Imputed", xlab = "Total steps per day")
 
 ```
 
@@ -147,26 +154,28 @@ if (impMedian == stepMedian) {
 ```{r days1, echo=TRUE}
 ImpData$dayName <- weekdays(ImpData$date)
 
-ImpData$week.end  <- ImpData$dayName %>%
-  if (ImpData$dayName = "Saturday" | ImpData$dayName = "Sunday") {
-    ImpData$week.end = "weekend"
-    } else {
-      ImpData$week.end = "weekday"
-      }
+weekdata <- subset(ImpData, dayName != c("Saturday", "Sunday"))
+weekenddata <- subset(ImpData, dayName == c("Saturday", "Sunday"))
 
-ImpData$week.end <- as.factor(ImpData$week.end)
+weekdata$dayType <- "weekday"
+weekenddata$dayType <- "weekend"
+
+ImpData2 <- rbind(weekdata, weekenddata)
+
+ImpData2$dayType <- as.factor(ImpData2$dayType)
 ```
 
 
 2. Make a panel plot containing a time series plot of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all weekday days or weekend days (y-axis). 
 
 ```{r days2, echo=TRUE}
-weekSteps <- ImpData %>%
-  group_by(interval) %>%
+weekSteps <- ImpData2 %>%
+  group_by(interval, dayType) %>%
   mutate(
     steps = mean(steps)
     )
 
+ggplot(data=weekSteps, aes(x=interval, y=steps)) + facet_grid(.~dayType) + geom_line() + labs(title = "Average Steps, Weekday vs Weekend") + labs(x = "Time of Day") + labs(y = "Total Steps") + guides(fill=FALSE)
 
 
 ```
