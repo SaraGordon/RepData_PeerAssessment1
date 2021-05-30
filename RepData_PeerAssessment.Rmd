@@ -86,16 +86,10 @@ naSum
 library(Hmisc)
 NAData <- ActData
 
-#Create function to calculate the mode
-mode <- function(x) {
-  uniquex <- unique(x)
-  uniquex[which.max(tabulate(match(x, uniquex)))]
-}
-
 #Impute using mode function
 ImpData <- NAData %>%
   group_by(interval) %>%
-  mutate(steps = impute(steps, mode))
+  mutate(steps = impute(steps, median))
 
 #Detach Hmisc so it doesn't interfere with dplyr
 detach("package:Hmisc", unload = TRUE)
@@ -116,11 +110,11 @@ impMean <- mean(ImpSum$stepTotal)
 impMedian <- median(ImpSum$stepTotal)
 ```
 
-The mean of the total number of imputed steps is `r impMean`.
+The mean of the total number of imputed steps is `r impMean`.  
 The median of the total number of imputed steps is `r impMedian`.
 
 
-4c. Do these values differ from the estimates from the first part of the assignment? What is the impact of imputing missing data on the estimates of the total daily number of steps?
+4c. Do these values differ from the estimates from the first part of the assignment?
 
 ```{r NAs5, echo = TRUE}
 if (impMean == stepMean) {
@@ -137,6 +131,22 @@ if (impMedian == stepMedian) {
   print("The imputed median is less than the not-imputed median.")
 } else if (impMedian > stepMedian) {
   print("The imputed median is greater than the not-imputed median.")
+}
+
+```
+
+4d. What is the impact of imputing missing data on the estimates of the total daily number of steps?
+
+```{r NAs6, echo = TRUE}
+ActStepSum <- sum(ActData$steps, na.rm = TRUE)
+ImpStepSum <- sum(ImpData$steps)
+
+if (ActStepSum == ImpStepSum) {
+  print("The total number of steps from the imputed and not-imputed datasets is the same.")
+} else if (ActStepSum < ImpStepSum) {
+  print("The imputed step total is less than the not-imputed step total.")
+} else if (ActStepSum > ImpStepSum) {
+  print("The imputed step total is greater than the not-imputed step total.")
 }
 
 ```
@@ -166,6 +176,6 @@ library(ggplot2)
 
 weekSteps <- summarize(group_by(ImpData2, interval, dayType), steps=mean(steps))
 
-ggplot(data=weekSteps, aes(x=interval, y=steps)) + facet_grid(.~dayType) + geom_line() + labs(title = "Average Steps, Weekday vs Weekend") + labs(x = "Time of Day") + labs(y = "Average Steps")
+ggplot(data=weekSteps, aes(x=interval, y=steps)) + facet_grid(dayType~.) + geom_line() + labs(title = "Average Steps, Weekday vs Weekend") + labs(x = "Time of Day") + labs(y = "Average Steps")
 
 ```
