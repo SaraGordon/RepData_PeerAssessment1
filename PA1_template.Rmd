@@ -2,7 +2,7 @@
 title: "RepData_PeerAssessment1"
 author: "SaraGordon"
 date: "5/24/2021"
-output: html_document
+output: github_document
 ---
 
 ## Loading and preprocessing the data
