@@ -37,7 +37,9 @@ stepSum <- summarize(group_by(ActData, date), stepTotal=sum(steps))
 2. Make a histogram of the total number of steps per day
 
 ```{r steps2, echo = TRUE}
+png(filename = "plot1.png")
 hist(stepSum$stepTotal, breaks = 60, main = "Histogram of Daily Steps", xlab = "Total steps per day")
+dev.off()
 ```
 
 3. Calculate and report the mean/median of the total number of steps per day
@@ -56,7 +58,9 @@ The median of the total number of steps is `r stepMedian`.
 ```{r daily1, echo = TRUE}
 dailySteps <- summarize(group_by(ActData, interval), avgSteps=mean(steps, na.rm=TRUE))
 
+png(filename = "plot2.png")
 with(dailySteps, plot(interval, avgSteps, type = "l", ylab = "Average steps", xlab = "Five-minute interval"))
+dev.off()
 ```
 
 2. Which 5-minute interval, on average across all the days in the dataset, contains the maximum number of steps?
@@ -100,7 +104,9 @@ detach("package:Hmisc", unload = TRUE)
 ```{r NAs3, echo = TRUE}
 ImpSum <- summarize(group_by(ImpData, date), stepTotal=sum(steps))
 
+png(filename = "plot3.png")
 hist(ImpSum$stepTotal, breaks = 60, main = "Histogram of Daily Steps, Imputed", xlab = "Total steps per day")
+dev.off()
 ```
 
 
@@ -173,9 +179,9 @@ ImpData2$dayType <- as.factor(ImpData2$dayType)
 
 ```{r days2, echo=TRUE}
 library(ggplot2)
-
 weekSteps <- summarize(group_by(ImpData2, interval, dayType), steps=mean(steps))
 
+png(filename = "plot4.png")
 ggplot(data=weekSteps, aes(x=interval, y=steps)) + facet_grid(dayType~.) + geom_line() + labs(title = "Average Steps, Weekday vs Weekend") + labs(x = "Time of Day") + labs(y = "Average Steps")
-
+dev.off()
 ```
